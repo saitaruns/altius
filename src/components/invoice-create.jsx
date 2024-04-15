@@ -52,14 +52,7 @@ export default function CreateInvoiceForm({
     control: form.control,
     name: "items",
     defaultValues: {
-      items: [
-        {
-          itemName: "item1",
-          quantity: "1",
-          price: "100",
-          amount: "100",
-        },
-      ],
+      items: [],
     },
   });
 
@@ -71,9 +64,13 @@ export default function CreateInvoiceForm({
   } = useFieldArray({
     control: form.control,
     name: "bills",
+    defaultValues: {
+      bills: [],
+    },
   });
 
   const onSubmit = (data) => {
+    console.log(data);
     setInvoice((prev) => [
       ...prev,
       {
@@ -186,7 +183,7 @@ export default function CreateInvoiceForm({
                   <ItemEdit
                     control={form.control}
                     index={index}
-                    value={field}
+                    value={field.value}
                     update={update}
                   />
                 </div>
@@ -218,7 +215,7 @@ export default function CreateInvoiceForm({
                 <BillEdit
                   control={form.control}
                   index={index}
-                  value={field}
+                  value={field.value}
                   update={bUpdate}
                 />
               </div>
@@ -239,34 +236,40 @@ export default function CreateInvoiceForm({
     </div>
   );
 }
-const Display = ({ control, index }) => {
+const Display = ({ control, index, fieldArray }) => {
   const data = useWatch({
     control,
-    name: `items.${index}`,
+    name: `${fieldArray}.${index}`,
   });
 
-  if (!data?.itemName) return null;
+  if (!data) return null;
 
   return (
     <div>
       <h3>Submitted Data</h3>
-      <p>
-        {data?.itemName} {data?.quantity} {data?.price} {data?.amount}
-      </p>
+      <div className="bg-slate-300">
+        {Object.entries(data).map(([key, value]) => (
+          <div key={key}>
+            <span>{key}</span>
+            {" : "}
+            <span>{value}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 const ItemEdit = ({ update, index, value, control }) => {
-  const { handleSubmit } = useForm({
+  const { handleSubmit, control: editControl } = useForm({
     defaultValues: value,
   });
 
   return (
     <div className="border p-4 rounded-md">
-      <Display control={control} index={index} />
+      <Display control={control} index={index} fieldArray={"items"} />
       <FormField
-        control={control}
+        control={editControl}
         name="itemName"
         render={({ field }) => (
           <FormItem>
@@ -280,7 +283,7 @@ const ItemEdit = ({ update, index, value, control }) => {
         )}
       />
       <FormField
-        control={control}
+        control={editControl}
         name="quantity"
         render={({ field }) => (
           <FormItem>
@@ -294,7 +297,7 @@ const ItemEdit = ({ update, index, value, control }) => {
         )}
       />
       <FormField
-        control={control}
+        control={editControl}
         name="price"
         render={({ field }) => (
           <FormItem>
@@ -308,7 +311,7 @@ const ItemEdit = ({ update, index, value, control }) => {
         )}
       />
       <FormField
-        control={control}
+        control={editControl}
         name="amount"
         render={({ field }) => (
           <FormItem>
@@ -325,8 +328,6 @@ const ItemEdit = ({ update, index, value, control }) => {
       <Button
         type="button"
         onClick={handleSubmit((data) => {
-          console.log(index);
-          console.log(data);
           update(index, data);
         })}
       >
@@ -337,14 +338,15 @@ const ItemEdit = ({ update, index, value, control }) => {
 };
 
 const BillEdit = ({ update, index, value, control }) => {
-  const { handleSubmit } = useForm({
+  const { handleSubmit, control: editControl } = useForm({
     defaultValues: value,
   });
 
   return (
     <div className="border p-4 rounded-md">
+      <Display control={control} index={index} fieldArray={"bills"} />
       <FormField
-        control={control}
+        control={editControl}
         name="billSundryName"
         render={({ field }) => (
           <FormItem>
@@ -358,7 +360,7 @@ const BillEdit = ({ update, index, value, control }) => {
         )}
       />
       <FormField
-        control={control}
+        control={editControl}
         name="amount"
         render={({ field }) => (
           <FormItem>
@@ -375,6 +377,7 @@ const BillEdit = ({ update, index, value, control }) => {
       <Button
         type="button"
         onClick={handleSubmit((data) => {
+          console.log(data);
           update(index, data);
         })}
       >
