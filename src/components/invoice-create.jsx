@@ -20,17 +20,29 @@ import { cn } from "@/lib/utils";
 import { Dialog } from "./ui/dialog";
 import { toast } from "sonner";
 
-// const formSchema = z.object({
-//   InvoiceNumber: z.string().min(3),
-//   CustomerName: z.string().min(3),
-//   BillingAddress: z.string().min(3),
-//   ShippingAddress: z.string().min(3),
-//   GSTIN: z.string().min(3),
+const formSchema = z.object({
+  InvoiceNumber: z.string().min(3),
+  CustomerName: z.string().min(3),
+  BillingAddress: z.string().min(3),
+  ShippingAddress: z.string().min(3),
+  GSTIN: z.string().min(3),
 
-//   items: z.string().optional(),
+  items: z.array(
+    z.object({
+      itemName: z.string().min(3),
+      quantity: z.coerce.number().min(1),
+      price: z.coerce.number().min(1),
+      amount: z.coerce.number().min(1),
+    })
+  ),
 
-//   bills: z.string().optional(),
-// });
+  bills: z.array(
+    z.object({
+      billSundryName: z.string().min(3),
+      amount: z.coerce.number().min(1),
+    })
+  ),
+});
 
 export default function CreateInvoiceForm({
   invoice = {},
@@ -38,22 +50,21 @@ export default function CreateInvoiceForm({
   closeDialog = () => {},
 }) {
   const form = useForm({
-    // resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      InvoiceNumber: "kasdj",
-      CustomerName: "dsaoidsa ",
-      BillingAddress: "gdfgdfg",
-      ShippingAddress: "kjsadkjsa",
-      GSTIN: "klsjdklasjdlsk",
+      InvoiceNumber: invoice?.InvoiceNumber || "",
+      CustomerName: invoice?.CustomerName || "",
+      BillingAddress: invoice?.BillingAddress || "",
+      ShippingAddress: invoice?.ShippingAddress || "",
+      GSTIN: invoice?.GSTIN || "",
+      items: [...(invoice?.items || [])],
+      bills: [...(invoice?.bills || [])],
     },
   });
 
   const { fields, append, update, remove } = useFieldArray({
     control: form.control,
     name: "items",
-    defaultValues: {
-      items: [],
-    },
   });
 
   const {
@@ -64,25 +75,29 @@ export default function CreateInvoiceForm({
   } = useFieldArray({
     control: form.control,
     name: "bills",
-    defaultValues: {
-      bills: [],
-    },
   });
 
   const onSubmit = (data) => {
-    console.log(data);
-    setInvoice((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        TotalAmount: "100",
-        ...data,
-      },
-    ]);
+    if (invoice.id) {
+      setInvoice((prev) => {
+        return prev.map((inv) => {
+          if (inv.id === invoice.id) {
+            return { ...inv, ...data };
+          }
+          return inv;
+        });
+      });
+    } else {
+      setInvoice((prev) => {
+        return [...prev, { ...data, id: prev.length + 1 }];
+      });
+    }
     toast.success("Invoice Created");
     closeDialog();
     form.reset();
   };
+
+  console.log(form.formState.errors, "errors");
 
   return (
     <div className="">
@@ -289,7 +304,7 @@ const ItemEdit = ({ update, index, value, control }) => {
           <FormItem>
             <FormLabel>quantity</FormLabel>
             <FormControl>
-              <Input placeholder="quantity" {...field} />
+              <Input type="number" placeholder="quantity" {...field} />
             </FormControl>
             <FormDescription>quantity</FormDescription>
             <FormMessage />
@@ -303,7 +318,7 @@ const ItemEdit = ({ update, index, value, control }) => {
           <FormItem>
             <FormLabel>price</FormLabel>
             <FormControl>
-              <Input placeholder="price" {...field} />
+              <Input type="number" placeholder="price" {...field} />
             </FormControl>
             <FormDescription>price</FormDescription>
             <FormMessage />
@@ -317,7 +332,7 @@ const ItemEdit = ({ update, index, value, control }) => {
           <FormItem>
             <FormLabel>amount</FormLabel>
             <FormControl>
-              <Input placeholder="amount" {...field} />
+              <Input type="number" placeholder="amount" {...field} />
             </FormControl>
             <FormDescription>amount</FormDescription>
             <FormMessage />
@@ -366,7 +381,7 @@ const BillEdit = ({ update, index, value, control }) => {
           <FormItem>
             <FormLabel>amount</FormLabel>
             <FormControl>
-              <Input placeholder="amount" {...field} />
+              <Input type="number" placeholder="amount" {...field} />
             </FormControl>
             <FormDescription>amount</FormDescription>
             <FormMessage />
@@ -377,7 +392,6 @@ const BillEdit = ({ update, index, value, control }) => {
       <Button
         type="button"
         onClick={handleSubmit((data) => {
-          console.log(data);
           update(index, data);
         })}
       >

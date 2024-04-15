@@ -26,6 +26,7 @@ const PAGE_SIZE = 3;
 const DataTable = () => {
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
+  const [idx, setIdx] = useState(null);
   const [invoices, setInvoice] = useState([
     {
       id: "1",
@@ -122,6 +123,7 @@ const DataTable = () => {
               <TableHead>ShippingAddress</TableHead>
               <TableHead>GSTIN</TableHead>
               <TableHead className="text-right">TotalAmount</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -147,6 +149,17 @@ const DataTable = () => {
                       <TableCell>{GSTIN}</TableCell>
                       <TableCell className="text-right">
                         {TotalAmount}
+                      </TableCell>
+                      <TableCell>
+                        <DialogTrigger asChild>
+                          <Button
+                            onClick={() => {
+                              setIdx(id);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        </DialogTrigger>
                       </TableCell>
                     </TableRow>
                   );
@@ -189,7 +202,7 @@ const DataTable = () => {
         </Pagination>
         <DialogContent className="max-h-[80%] overflow-auto">
           <CreateInvoiceForm
-            invoice={{}}
+            invoice={invoices.find((invoice) => invoice.id === idx)}
             setInvoice={setInvoice}
             closeDialog={() => {
               setOpen(false);
